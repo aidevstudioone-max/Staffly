@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staffly — Employee Management, Simplified</title>
+<meta name="description" content="Staffly is an employee management system — directory, one-click attendance, and leave requests in one dashboard. Try the live demo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="icon-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.5 14.3c2.7.3 5 2.4 5 5.7"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><path d="M4 12.5l5.5 5.5L20 6"/></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+  <symbol id="icon-briefcase" viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="19" height="12.5" rx="2"/><path d="M8 7.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5M2.5 13h19"/></symbol>
+  <symbol id="icon-chart" viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+</svg>
+
+<div id="toast"></div>
+
+<header class="navbar" id="navbar">
+  <div class="wrap">
+    <a href="#top" class="brand"><span class="brand-mark">S</span> Staffly</a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#features">Features</a>
+      <a href="#preview">Preview</a>
+      <a href="#pricing">Pricing</a>
+      <a href="app.html" class="btn btn-primary btn-sm">Try Live Demo</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><svg class="icon"><use href="#icon-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="eyebrow"><svg class="icon"><use href="#icon-people"/></svg> Employee Management, Simplified</span>
+      <h1>One dashboard for your <em>whole team.</em></h1>
+      <p class="hero-sub">Staffly keeps your employee directory, attendance, and leave requests in one clean place — so HR stops living in spreadsheets and email threads.</p>
+      <div class="hero-ctas">
+        <a href="app.html" class="btn btn-primary">Try Live Demo <svg class="icon"><use href="#icon-briefcase"/></svg></a>
+        <a href="#features" class="btn btn-outline">View Features</a>
+      </div>
+      <div class="hero-stats">
+        <span class="stat"><svg class="icon"><use href="#icon-people"/></svg> 10 seeded employees</span>
+        <span class="stat"><svg class="icon"><use href="#icon-check"/></svg> One-click attendance</span>
+        <span class="stat"><svg class="icon"><use href="#icon-clock"/></svg> No setup required</span>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="roster-card">
+        <div class="roster-card-head">
+          <h4>Today's team</h4>
+          <span class="pill">8 / 10 present</span>
+        </div>
+        <div class="roster-row">
+          <span class="avatar-sm" style="background:#4F46E5">AK</span>
+          <div><div class="name">Aditi Kulkarni</div><div class="role">Engineering</div></div>
+          <span class="status present">Present</span>
+        </div>
+        <div class="roster-row">
+          <span class="avatar-sm" style="background:#0EA5A0">RS</span>
+          <div><div class="name">Rohan Sharma</div><div class="role">Sales</div></div>
+          <span class="status present">Present</span>
+        </div>
+        <div class="roster-row">
+          <span class="avatar-sm" style="background:#E0A030">MJ</span>
+          <div><div class="name">Meera Joshi</div><div class="role">Design</div></div>
+          <span class="status leave">On Leave</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-heading reveal">
+      <span class="eyebrow">Features</span>
+      <h2>Everything HR needs, without the overhead.</h2>
+      <p>Built for the day-to-day of managing a small, growing team.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg class="icon"><use href="#icon-people"/></svg></div>
+        <h3>Employee directory</h3>
+        <p>Every employee, their role, and department — searchable and always up to date.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg class="icon"><use href="#icon-check"/></svg></div>
+        <h3>One-click attendance</h3>
+        <p>Mark present, absent, or on leave with a single click on a clean weekly grid.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg class="icon"><use href="#icon-calendar"/></svg></div>
+        <h3>Leave request workflow</h3>
+        <p>Employees request time off, managers approve or reject — no more email chains.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg class="icon"><use href="#icon-chart"/></svg></div>
+        <h3>Real-time dashboard</h3>
+        <p>Headcount, who's in today, and who's out — the moment you open the app.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg class="icon"><use href="#icon-briefcase"/></svg></div>
+        <h3>Department insights</h3>
+        <p>See your team broken down by department at a glance.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg class="icon"><use href="#icon-plus"/></svg></div>
+        <h3>Instant onboarding</h3>
+        <p>Add a new hire to the directory in seconds — no paperwork required.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="preview">
+  <div class="wrap">
+    <div class="section-heading reveal">
+      <span class="eyebrow">Live Preview</span>
+      <h2>This isn't a mockup. It's the actual app.</h2>
+      <p>What you see below is Staffly running live — try the full thing yourself.</p>
+    </div>
+    <div class="reveal">
+      <div class="browser-frame">
+        <div class="browser-bar">
+          <div class="browser-dots"><span></span><span></span><span></span></div>
+          <div class="browser-url">staffly.app/dashboard</div>
+        </div>
+        <div class="browser-viewport">
+          <iframe src="app.html" title="Staffly live preview" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
+        </div>
+      </div>
+      <div class="preview-cta">
+        <a href="app.html" class="btn btn-primary">Open Full Demo <svg class="icon"><use href="#icon-briefcase"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-heading reveal">
+      <span class="eyebrow">Pricing</span>
+      <h2>Simple pricing, built for growing teams.</h2>
+      <p>Every plan includes the full directory, attendance, and leave workflow.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card reveal">
+        <h3>Starter</h3>
+        <div class="price">₹999<small> /mo</small></div>
+        <p class="price-desc">For teams up to 15 employees.</p>
+        <ul class="price-list">
+          <li>Up to 15 employees</li>
+          <li>Directory &amp; attendance</li>
+          <li>Leave requests</li>
+          <li>Email support</li>
+        </ul>
+        <a href="app.html" class="btn btn-outline btn-block">Try Live Demo</a>
+      </div>
+      <div class="price-card featured reveal">
+        <span class="price-badge">Most Popular</span>
+        <h3>Team</h3>
+        <div class="price">₹2,499<small> /mo</small></div>
+        <p class="price-desc">For teams up to 75 employees.</p>
+        <ul class="price-list">
+          <li>Up to 75 employees</li>
+          <li>Everything in Starter</li>
+          <li>Department insights</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="app.html" class="btn btn-primary btn-block">Try Live Demo</a>
+      </div>
+      <div class="price-card reveal">
+        <h3>Business</h3>
+        <div class="price">Custom</div>
+        <p class="price-desc">For larger organizations.</p>
+        <ul class="price-list">
+          <li>Unlimited employees</li>
+          <li>Everything in Team</li>
+          <li>Custom reporting</li>
+          <li>Dedicated onboarding</li>
+        </ul>
+        <a href="app.html" class="btn btn-outline btn-block">Talk to Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="cta-banner reveal">
+    <h2>Ready to see Staffly in action?</h2>
+    <p>No sign-up, no setup — jump straight into a fully working demo.</p>
+    <a href="app.html" class="btn btn-primary" style="background:#fff; color:var(--indigo)">Try Live Demo <svg class="icon"><use href="#icon-briefcase"/></svg></a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#top" class="brand"><span class="brand-mark">S</span> Staffly</a>
+        <p>Employee management, built for small and growing teams.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="#features">Features</a>
+        <a href="#preview">Live Preview</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="app.html">Try the Demo</a>
+        <a href="app.html#view-directory">Directory</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <a href="#">hello@staffly.app</a>
+        <a href="#">Request a Callback</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Staffly.</span>
+      <span>Demo product — all data is stored locally in your browser, no real employee records are processed.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
