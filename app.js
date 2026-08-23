@@ -462,6 +462,22 @@ function generateUtr() {
   return "UTR" + Date.now().toString().slice(-9) + Math.floor(10 + Math.random() * 90);
 }
 
+// Standard Indian payslip structure: Basic 50% of gross, HRA 40% of Basic,
+// remainder as Special Allowance so earnings always sum back to gross.
+// PF is 12% of Basic, capped at the statutory PF wage ceiling (₹15,000).
+function computeSalaryBreakdown(gross) {
+  const basic = Math.round(gross * 0.5);
+  const hra = Math.round(basic * 0.4);
+  const special = gross - basic - hra;
+  const pfWage = Math.min(basic, 15000);
+  const pf = Math.round(pfWage * 0.12);
+  const professionalTax = gross > 15000 ? 200 : 0;
+  const grossEarnings = basic + hra + special;
+  const totalDeductions = pf + professionalTax;
+  const netPay = grossEarnings - totalDeductions;
+  return { basic, hra, special, grossEarnings, pf, professionalTax, totalDeductions, netPay };
+}
+
 function renderPayroll() {
   const employees = ensureSalaries(loadEmployees());
   const monthKey = getCurrentMonthKey();
@@ -489,13 +505,16 @@ function renderPayroll() {
           <td>${e.department}</td>
           <td>${formatCurrency(e.salary)}</td>
           <td><span class="status-pill ${rec ? "active" : "on_leave"}">${rec ? "Paid" : "Pending"}</span></td>
-          <td>${rec ? `<span class="payroll-utr">${rec.utr}</span>` : `<button class="btn btn-primary btn-sm" data-payout="${e.id}">Pay Now</button>`}</td>
+          <td>${rec ? `<div class="payroll-paid-cell"><span class="payroll-utr">${rec.utr}</span><button class="btn btn-outline btn-sm" data-payslip="${e.id}">View Payslip</button></div>` : `<button class="btn btn-primary btn-sm" data-payout="${e.id}">Pay Now</button>`}</td>
         </tr>`;
       })
       .join("")}</tbody>`;
 
   table.querySelectorAll("[data-payout]").forEach((btn) =>
     btn.addEventListener("click", () => openPayoutModal(btn.dataset.payout))
+  );
+  table.querySelectorAll("[data-payslip]").forEach((btn) =>
+    btn.addEventListener("click", () => openPayslipModal(btn.dataset.payslip, monthKey))
   );
 }
 
@@ -585,6 +604,7 @@ function completePayout(emp, paymentDetail) {
     utr,
     amount: emp.salary,
     paidAt: new Date().toISOString(),
+    breakdown: computeSalaryBreakdown(emp.salary),
   };
   savePayroll(payroll);
 
@@ -656,6 +676,7 @@ function openBulkPayoutModal() {
           utr: generateUtr(),
           amount: emp.salary,
           paidAt: new Date().toISOString(),
+          breakdown: computeSalaryBreakdown(emp.salary),
         };
       });
       savePayroll(payroll2);
@@ -674,6 +695,108 @@ function openBulkPayoutModal() {
   });
 
   document.getElementById("modalOverlay").classList.add("open");
+}
+
+function openPayslipModal(empId, monthKey) {
+  const employees = loadEmployees();
+  const emp = employees.find((e) => e.id === empId);
+  const payroll = loadPayroll();
+  const rec = payroll[monthKey] && payroll[monthKey][empId];
+  if (!emp || !rec) return;
+  const b = rec.breakdown || computeSalaryBreakdown(rec.amount);
+  const paidOnLabel = new Date(rec.paidAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+  document.getElementById("modalBody").innerHTML = `
+    <div class="modal-head">
+      <h3>Payslip</h3>
+      <button class="modal-close" id="modalCloseBtn"><svg class="icon"><use href="#icon-x"/></svg></button>
+    </div>
+    <div class="payslip">
+      <div class="payslip-head">
+        <div><strong>${emp.name}</strong><br><span class="muted">${emp.role} · ${emp.department}</span></div>
+        <div class="payslip-period">${currentMonthLabel()}</div>
+      </div>
+      <div class="payslip-cols">
+        <div>
+          <h4>Earnings</h4>
+          <div class="payslip-row"><span>Basic</span><span>${formatCurrency(b.basic)}</span></div>
+          <div class="payslip-row"><span>HRA</span><span>${formatCurrency(b.hra)}</span></div>
+          <div class="payslip-row"><span>Special Allowance</span><span>${formatCurrency(b.special)}</span></div>
+          <div class="payslip-row total"><span>Gross Earnings</span><span>${formatCurrency(b.grossEarnings)}</span></div>
+        </div>
+        <div>
+          <h4>Deductions</h4>
+          <div class="payslip-row"><span>Provident Fund</span><span>${formatCurrency(b.pf)}</span></div>
+          <div class="payslip-row"><span>Professional Tax</span><span>${formatCurrency(b.professionalTax)}</span></div>
+          <div class="payslip-row total"><span>Total Deductions</span><span>${formatCurrency(b.totalDeductions)}</span></div>
+        </div>
+      </div>
+      <div class="payslip-netpay"><span>Net Pay</span><span>${formatCurrency(b.netPay)}</span></div>
+      <div class="payslip-meta">
+        <div class="payslip-row"><span>Paid via</span><span>${rec.method} (${rec.display})</span></div>
+        <div class="payslip-row"><span>Reference (UTR)</span><span>${rec.utr}</span></div>
+        <div class="payslip-row"><span>Paid on</span><span>${paidOnLabel}</span></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline btn-block" id="payslipCloseBtn">Close</button>
+      <button type="button" class="btn btn-primary btn-block" id="payslipPrintBtn">Print Payslip</button>
+    </div>`;
+
+  document.getElementById("modalCloseBtn").addEventListener("click", closePayrollModal);
+  document.getElementById("payslipCloseBtn").addEventListener("click", closePayrollModal);
+  document.getElementById("payslipPrintBtn").addEventListener("click", () => printPayslip(emp, rec, b, paidOnLabel));
+
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function printPayslip(emp, rec, b, paidOnLabel) {
+  const w = window.open("", "_blank", "height=650,width=480");
+  if (!w) {
+    showToast("Print popup was blocked by the browser.");
+    return;
+  }
+  const row = (label, val, cls) => `<div class="row${cls ? " " + cls : ""}"><span>${label}</span><span>${val}</span></div>`;
+  w.document.write(`<html><head><title>Payslip - ${emp.name}</title><style>
+    body{font-family:Arial,Helvetica,sans-serif;padding:30px;color:#1B2130;max-width:420px;margin:0 auto;}
+    .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+    h2{margin:0 0 2px;font-size:1.15rem;}
+    .muted{color:#5A6274;font-size:.85rem;margin:0;}
+    .period{font-weight:700;font-size:.9rem;}
+    h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#5A6274;margin:20px 0 8px;border-bottom:1px solid #E1E4EE;padding-bottom:6px;}
+    .row{display:flex;justify-content:space-between;padding:4px 0;font-size:.92rem;}
+    .row.total{font-weight:700;border-top:1px dashed #E1E4EE;margin-top:4px;padding-top:8px;}
+    .netpay{display:flex;justify-content:space-between;background:#EEF0FA;border-radius:8px;padding:14px 16px;margin-top:20px;font-weight:800;font-size:1.05rem;}
+    .meta{margin-top:20px;border-top:1px solid #E1E4EE;padding-top:12px;}
+    .meta .row{font-size:.82rem;color:#5A6274;}
+  </style></head><body>
+    <div class="top">
+      <div><h2>${emp.name}</h2><p class="muted">${emp.role} &middot; ${emp.department} &middot; ${emp.id}</p></div>
+      <div class="period">${currentMonthLabel()}</div>
+    </div>
+    <h4>Earnings</h4>
+    ${row("Basic", formatCurrency(b.basic))}
+    ${row("HRA", formatCurrency(b.hra))}
+    ${row("Special Allowance", formatCurrency(b.special))}
+    ${row("Gross Earnings", formatCurrency(b.grossEarnings), "total")}
+    <h4>Deductions</h4>
+    ${row("Provident Fund", formatCurrency(b.pf))}
+    ${row("Professional Tax", formatCurrency(b.professionalTax))}
+    ${row("Total Deductions", formatCurrency(b.totalDeductions), "total")}
+    <div class="netpay"><span>Net Pay</span><span>${formatCurrency(b.netPay)}</span></div>
+    <div class="meta">
+      ${row("Paid via", `${rec.method} (${rec.display})`)}
+      ${row("Reference (UTR)", rec.utr)}
+      ${row("Paid on", paidOnLabel)}
+    </div>
+    <p style="text-align:center;color:#8A8F9C;font-size:.7rem;margin-top:24px;">This is a computer-generated payslip and does not require a signature.</p>
+  </body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => {
+    w.print();
+    w.close();
+  }, 400);
 }
 
 // ---------- View switching ----------

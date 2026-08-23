@@ -98,6 +98,19 @@ table.attendance td { padding: 10px 16px; border-top: 1px solid var(--border); w
 
 /* ---------- Payroll ---------- */
 .payroll-utr { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-soft); }
+.payroll-paid-cell { display: flex; align-items: center; gap: 10px; }
+
+/* ---------- Payslip ---------- */
+.payslip-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.payslip-head .muted { color: var(--ink-soft); font-size: 0.84rem; }
+.payslip-period { font-weight: 700; font-size: 0.88rem; color: var(--indigo); }
+.payslip-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px; }
+.payslip-cols h4 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.payslip-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.86rem; gap: 8px; }
+.payslip-row.total { font-weight: 700; border-top: 1px dashed var(--border); margin-top: 4px; padding-top: 8px; }
+.payslip-netpay { display: flex; justify-content: space-between; background: var(--bg-alt); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px; font-weight: 800; font-size: 1.05rem; }
+.payslip-meta { border-top: 1px solid var(--border); padding-top: 12px; }
+.payslip-meta .payslip-row { font-size: 0.8rem; color: var(--ink-soft); }
 
 /* ---------- Modal ---------- */
 .modal-overlay { position: fixed; inset: 0; background: rgba(27, 33, 48, 0.5); backdrop-filter: blur(2px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
