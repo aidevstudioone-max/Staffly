@@ -9,7 +9,7 @@ export default function Footer() {
           <a href="#preview" className="hover:text-indigo">Live Preview</a>
           <a href="#pricing" className="hover:text-indigo">Pricing</a>
         </div>
-        <p className="mt-4 text-[.76rem] text-ink-soft/80">© 2026 Teamloom. Demo product — all data is stored locally in your browser, no real employee records are processed.</p>
+        <p className="mt-4 text-[.76rem] text-ink-soft/80">© 2026 Teamloom. Demo product by ठिkaana — all data is stored locally in your browser, no real employee records are processed.</p>
       </div>
     </footer>
   )
