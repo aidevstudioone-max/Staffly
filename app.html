@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Staffly — Dashboard</title>
+<title>Teamloom — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -20,18 +20,22 @@
   <symbol id="icon-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
   <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
   <symbol id="icon-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="icon-cash" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="icon-bank" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M4.5 10v9M9 10v9M15 10v9M19.5 10v9M3 19h18"/></symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
 </svg>
 
 <div id="toast"></div>
 
 <header class="app-topbar">
   <div class="wrap">
-    <a href="index.html" class="brand"><span class="brand-mark">S</span> Staffly</a>
+    <a href="index.html" class="brand"><span class="brand-mark">T</span> Teamloom</a>
     <nav class="app-tabs" id="appTabs">
       <button class="app-tab active" data-view="dashboard">Dashboard</button>
       <button class="app-tab" data-view="directory">Directory</button>
       <button class="app-tab" data-view="attendance">Attendance</button>
       <button class="app-tab" data-view="leave">Leave Requests</button>
+      <button class="app-tab" data-view="payroll">Payroll</button>
     </nav>
     <a href="index.html" class="back-link"><svg class="icon"><use href="#icon-back"/></svg> Back to site</a>
   </div>
@@ -120,8 +124,25 @@
       </div>
     </section>
 
+    <section id="view-payroll" class="view">
+      <div class="view-head">
+        <div><h2>Payroll</h2><p>Salary payouts for <span id="payrollMonthLabel"></span>.</p></div>
+        <button class="btn btn-primary btn-sm" id="bulkPayoutBtn"><svg class="icon"><use href="#icon-bank"/></svg> Pay All Pending</button>
+      </div>
+      <div class="stat-strip" id="payrollStats"></div>
+      <div class="panel">
+        <div class="table-wrap"><table class="attendance" id="payrollTable"></table></div>
+      </div>
+    </section>
+
   </div>
 </main>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

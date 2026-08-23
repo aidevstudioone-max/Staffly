@@ -1,6 +1,7 @@
-const EMPLOYEES_KEY = "staffly_employees";
-const ATTENDANCE_KEY = "staffly_attendance";
-const LEAVE_KEY = "staffly_leave_requests";
+const EMPLOYEES_KEY = "teamloom_employees";
+const ATTENDANCE_KEY = "teamloom_attendance";
+const LEAVE_KEY = "teamloom_leave_requests";
+const PAYROLL_KEY = "teamloom_payroll";
 
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const DAY_LABELS = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
@@ -49,6 +50,16 @@ function formatDateRange(start, end) {
   const e = new Date(end + "T00:00:00").toLocaleDateString("en-IN", opts);
   return start === end ? s : `${s} – ${e}`;
 }
+function formatCurrency(n) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+function getCurrentMonthKey() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+function currentMonthLabel() {
+  return new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+}
 
 // ---------- localStorage ----------
 function loadEmployees() {
@@ -68,6 +79,12 @@ function loadLeaveRequests() {
 }
 function saveLeaveRequests(list) {
   localStorage.setItem(LEAVE_KEY, JSON.stringify(list));
+}
+function loadPayroll() {
+  return JSON.parse(localStorage.getItem(PAYROLL_KEY) || "{}");
+}
+function savePayroll(obj) {
+  localStorage.setItem(PAYROLL_KEY, JSON.stringify(obj));
 }
 
 // ---------- Seeding ----------
@@ -400,6 +417,265 @@ function renderDashboard() {
   renderLeaveList(document.getElementById("dashLeavePreview"), pending.slice(0, 3), employees, true);
 }
 
+// ---------- Payroll ----------
+const ROLE_SALARY = {
+  "Senior Engineer": 95000, "Sales Executive": 42000, "Product Designer": 68000,
+  "Backend Engineer": 88000, "Sales Manager": 72000, "Operations Lead": 65000,
+  "UX Designer": 60000, "Frontend Engineer": 80000, "Operations Associate": 38000,
+};
+const BANK_NAMES = ["HDFC Bank", "ICICI Bank", "State Bank of India", "Axis Bank", "Kotak Mahindra Bank"];
+const UPI_PROVIDERS = ["okhdfcbank", "okaxis", "oksbi", "okicici"];
+
+function hashStr(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+  return Math.abs(h);
+}
+function ensureSalaries(employees) {
+  let changed = false;
+  employees.forEach((e) => {
+    if (!e.salary) {
+      e.salary = ROLE_SALARY[e.role] || 50000;
+      changed = true;
+    }
+  });
+  if (changed) saveEmployees(employees);
+  return employees;
+}
+function bankNameForEmployee(emp) {
+  return BANK_NAMES[hashStr(emp.id) % BANK_NAMES.length];
+}
+function maskedAccountForEmployee(emp) {
+  const digits = String(1000 + (hashStr(emp.id + "acct") % 9000));
+  return "•••• •••• " + digits;
+}
+function ifscForEmployee(emp) {
+  const bank = bankNameForEmployee(emp);
+  const prefix = bank.split(" ")[0].slice(0, 4).toUpperCase();
+  return prefix + "0" + String(100000 + (hashStr(emp.id + "ifsc") % 899999));
+}
+function upiForEmployee(emp) {
+  const handle = emp.name.toLowerCase().replace(/[^a-z]/g, ".");
+  return handle + (hashStr(emp.id + "upi") % 99) + "@" + UPI_PROVIDERS[hashStr(emp.id) % UPI_PROVIDERS.length];
+}
+function generateUtr() {
+  return "UTR" + Date.now().toString().slice(-9) + Math.floor(10 + Math.random() * 90);
+}
+
+function renderPayroll() {
+  const employees = ensureSalaries(loadEmployees());
+  const monthKey = getCurrentMonthKey();
+  const payroll = loadPayroll();
+  const paidMap = payroll[monthKey] || {};
+
+  const totalPayroll = employees.reduce((s, e) => s + e.salary, 0);
+  const paidAmount = employees.reduce((s, e) => s + (paidMap[e.id] ? e.salary : 0), 0);
+  const pendingCount = employees.filter((e) => !paidMap[e.id]).length;
+
+  document.getElementById("payrollMonthLabel").textContent = currentMonthLabel();
+  document.getElementById("payrollStats").innerHTML = `
+    <div class="stat-card"><div class="stat-label"><svg class="icon"><use href="#icon-cash"/></svg> Total Payroll</div><div class="stat-value">${formatCurrency(totalPayroll)}</div></div>
+    <div class="stat-card"><div class="stat-label"><svg class="icon"><use href="#icon-check"/></svg> Paid This Month</div><div class="stat-value">${formatCurrency(paidAmount)}</div></div>
+    <div class="stat-card"><div class="stat-label"><svg class="icon"><use href="#icon-calendar"/></svg> Pending Payouts</div><div class="stat-value">${pendingCount}</div></div>`;
+
+  const table = document.getElementById("payrollTable");
+  table.innerHTML = `
+    <thead><tr><th>Employee</th><th>Department</th><th>Monthly Salary</th><th>Status</th><th></th></tr></thead>
+    <tbody>${employees
+      .map((e) => {
+        const rec = paidMap[e.id];
+        return `<tr>
+          <td><div class="emp-cell"><span class="avatar" style="background:${avatarColor(e.name)}; width:28px; height:28px; font-size:.68rem">${initials(e.name)}</span> ${e.name}</div></td>
+          <td>${e.department}</td>
+          <td>${formatCurrency(e.salary)}</td>
+          <td><span class="status-pill ${rec ? "active" : "on_leave"}">${rec ? "Paid" : "Pending"}</span></td>
+          <td>${rec ? `<span class="payroll-utr">${rec.utr}</span>` : `<button class="btn btn-primary btn-sm" data-payout="${e.id}">Pay Now</button>`}</td>
+        </tr>`;
+      })
+      .join("")}</tbody>`;
+
+  table.querySelectorAll("[data-payout]").forEach((btn) =>
+    btn.addEventListener("click", () => openPayoutModal(btn.dataset.payout))
+  );
+}
+
+function closePayrollModal() {
+  document.getElementById("modalOverlay").classList.remove("open");
+}
+
+function openPayoutModal(empId) {
+  const employees = ensureSalaries(loadEmployees());
+  const emp = employees.find((e) => e.id === empId);
+  const bank = bankNameForEmployee(emp);
+  const acct = maskedAccountForEmployee(emp);
+  const ifsc = ifscForEmployee(emp);
+  const upi = upiForEmployee(emp);
+
+  document.getElementById("modalBody").innerHTML = `
+    <div class="modal-head">
+      <h3>Process Payout</h3>
+      <button class="modal-close" id="modalCloseBtn"><svg class="icon"><use href="#icon-x"/></svg></button>
+    </div>
+    <div class="modal-summary">
+      <div class="row"><span>Employee</span><span>${emp.name}</span></div>
+      <div class="row"><span>Department</span><span>${emp.department}</span></div>
+      <div class="row total"><span>Net salary</span><span>${formatCurrency(emp.salary)}</span></div>
+    </div>
+    <div class="pay-methods" id="payMethods">
+      <button type="button" class="pay-method-tab active" data-method="bank"><svg class="icon"><use href="#icon-bank"/></svg> Bank Transfer</button>
+      <button type="button" class="pay-method-tab" data-method="upi"><svg class="icon"><use href="#icon-cash"/></svg> UPI</button>
+    </div>
+    <div class="pay-panel active" data-panel="bank">
+      <div class="payout-account-card">
+        <div class="row"><span>Bank</span><span>${bank}</span></div>
+        <div class="row"><span>Account</span><span>${acct}</span></div>
+        <div class="row"><span>IFSC</span><span>${ifsc}</span></div>
+        <div class="row"><span>Beneficiary</span><span>${emp.name}</span></div>
+      </div>
+    </div>
+    <div class="pay-panel" data-panel="upi">
+      <div class="payout-account-card">
+        <div class="row"><span>UPI ID</span><span>${upi}</span></div>
+        <div class="row"><span>Beneficiary</span><span>${emp.name}</span></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline btn-block" id="payoutCancelBtn">Cancel</button>
+      <button type="button" class="btn btn-primary btn-block pay-btn-pay" id="payoutBtn">
+        <span class="pay-btn-label">Authorize ${formatCurrency(emp.salary)}</span>
+        <span class="spinner"><span class="spinner-ring"></span></span>
+      </button>
+    </div>
+    <div class="pay-trust"><svg class="icon"><use href="#icon-lock"/></svg> Bank-grade encryption · Processed by TeamloomPay</div>`;
+
+  document.getElementById("modalCloseBtn").addEventListener("click", closePayrollModal);
+  document.getElementById("payoutCancelBtn").addEventListener("click", closePayrollModal);
+
+  let activeMethod = "bank";
+  document.querySelectorAll(".pay-method-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      activeMethod = tab.dataset.method;
+      document.querySelectorAll(".pay-method-tab").forEach((t) => t.classList.toggle("active", t === tab));
+      document.querySelectorAll(".pay-panel").forEach((p) => p.classList.toggle("active", p.dataset.panel === activeMethod));
+    });
+  });
+
+  document.getElementById("payoutBtn").addEventListener("click", () => {
+    const btn = document.getElementById("payoutBtn");
+    btn.classList.add("loading");
+    btn.disabled = true;
+    document.getElementById("payoutCancelBtn").disabled = true;
+    const paymentDetail =
+      activeMethod === "bank" ? { method: "Bank Transfer", display: `${bank} ${acct}` } : { method: "UPI", display: upi };
+    setTimeout(() => completePayout(emp, paymentDetail), 1500);
+  });
+
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function completePayout(emp, paymentDetail) {
+  const monthKey = getCurrentMonthKey();
+  const payroll = loadPayroll();
+  if (!payroll[monthKey]) payroll[monthKey] = {};
+  const utr = generateUtr();
+  payroll[monthKey][emp.id] = {
+    paid: true,
+    method: paymentDetail.method,
+    display: paymentDetail.display,
+    utr,
+    amount: emp.salary,
+    paidAt: new Date().toISOString(),
+  };
+  savePayroll(payroll);
+
+  document.getElementById("modalBody").innerHTML = `
+    <div class="confirm-view">
+      <div class="confirm-icon"><svg class="icon"><use href="#icon-check"/></svg></div>
+      <h3>Payout complete</h3>
+      <p>${formatCurrency(emp.salary)} has been sent to ${emp.name} via ${paymentDetail.method}.</p>
+      <div class="pay-receipt">
+        <div class="row"><span>Reference (UTR)</span><span>${utr}</span></div>
+        <div class="row"><span>Paid to</span><span>${paymentDetail.display}</span></div>
+        <div class="row"><span>Amount</span><span>${formatCurrency(emp.salary)}</span></div>
+        <div class="row muted"><span>Status</span><span style="color:var(--green); font-weight:700;">Paid</span></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="modalDoneBtn">Done</button>
+    </div>`;
+  document.getElementById("modalDoneBtn").addEventListener("click", closePayrollModal);
+
+  showToast(`Payout sent to ${emp.name}`);
+  renderPayroll();
+}
+
+function openBulkPayoutModal() {
+  const employees = ensureSalaries(loadEmployees());
+  const monthKey = getCurrentMonthKey();
+  const payroll = loadPayroll();
+  const paidMap = payroll[monthKey] || {};
+  const pending = employees.filter((e) => !paidMap[e.id]);
+  if (!pending.length) {
+    showToast("Everyone has already been paid this month");
+    return;
+  }
+  const total = pending.reduce((s, e) => s + e.salary, 0);
+
+  document.getElementById("modalBody").innerHTML = `
+    <div class="modal-head">
+      <h3>Batch Payout</h3>
+      <button class="modal-close" id="modalCloseBtn"><svg class="icon"><use href="#icon-x"/></svg></button>
+    </div>
+    <div class="modal-summary">
+      <div class="row"><span>Employees</span><span>${pending.length} pending</span></div>
+      <div class="row total"><span>Total payout</span><span>${formatCurrency(total)}</span></div>
+    </div>
+    <p class="pay-hint">Salaries will be transferred to each employee's bank account on file via TeamloomPay.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline btn-block" id="bulkCancelBtn">Cancel</button>
+      <button type="button" class="btn btn-primary btn-block pay-btn-pay" id="bulkPayBtn">
+        <span class="pay-btn-label">Authorize ${formatCurrency(total)}</span>
+        <span class="spinner"><span class="spinner-ring"></span></span>
+      </button>
+    </div>
+    <div class="pay-trust"><svg class="icon"><use href="#icon-lock"/></svg> Bank-grade encryption · Processed by TeamloomPay</div>`;
+
+  document.getElementById("modalCloseBtn").addEventListener("click", closePayrollModal);
+  document.getElementById("bulkCancelBtn").addEventListener("click", closePayrollModal);
+  document.getElementById("bulkPayBtn").addEventListener("click", () => {
+    const btn = document.getElementById("bulkPayBtn");
+    btn.classList.add("loading");
+    btn.disabled = true;
+    document.getElementById("bulkCancelBtn").disabled = true;
+    setTimeout(() => {
+      const payroll2 = loadPayroll();
+      if (!payroll2[monthKey]) payroll2[monthKey] = {};
+      pending.forEach((emp) => {
+        payroll2[monthKey][emp.id] = {
+          paid: true,
+          method: "Bank Transfer",
+          display: `${bankNameForEmployee(emp)} ${maskedAccountForEmployee(emp)}`,
+          utr: generateUtr(),
+          amount: emp.salary,
+          paidAt: new Date().toISOString(),
+        };
+      });
+      savePayroll(payroll2);
+
+      document.getElementById("modalBody").innerHTML = `
+        <div class="confirm-view">
+          <div class="confirm-icon"><svg class="icon"><use href="#icon-check"/></svg></div>
+          <h3>Payroll processed</h3>
+          <p>${formatCurrency(total)} sent to ${pending.length} employee${pending.length > 1 ? "s" : ""}.</p>
+          <button class="btn btn-primary btn-block" id="modalDoneBtn">Done</button>
+        </div>`;
+      document.getElementById("modalDoneBtn").addEventListener("click", closePayrollModal);
+      showToast(`Payroll processed for ${pending.length} employee(s)`);
+      renderPayroll();
+    }, 1800);
+  });
+
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
 // ---------- View switching ----------
 function switchView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + name));
@@ -434,6 +710,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("cancelAddForm").addEventListener("click", closeAddForm);
   document.getElementById("employeeForm").addEventListener("submit", handleAddEmployeeSubmit);
   document.getElementById("leaveForm").addEventListener("submit", handleLeaveRequestSubmit);
+  document.getElementById("bulkPayoutBtn").addEventListener("click", openBulkPayoutModal);
+  document.getElementById("modalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "modalOverlay") closePayrollModal();
+  });
 
   const today = todayISO();
   document.getElementById("leaveStart").min = today;
@@ -444,4 +724,5 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAttendanceGrid();
   renderLeaveRequests();
   renderDashboard();
+  renderPayroll();
 });

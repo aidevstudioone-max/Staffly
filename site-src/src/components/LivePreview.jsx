@@ -9,7 +9,7 @@ export default function LivePreview() {
         <Reveal className="mx-auto mb-12 max-w-[54ch] text-center">
           <span className="mb-4 inline-block rounded-full bg-indigo-light px-3.5 py-1.5 font-sans text-[.72rem] font-semibold uppercase tracking-[.07em] text-indigo">Live Preview</span>
           <h2 className="mb-4 font-display text-[clamp(1.8rem,3.6vw,2.5rem)] font-semibold leading-[1.15] tracking-tight">This isn't a mockup. It's the actual app.</h2>
-          <p className="text-[1.02rem] leading-relaxed text-ink-soft text-pretty">What you see below is Staffly running live — try the full thing yourself.</p>
+          <p className="text-[1.02rem] leading-relaxed text-ink-soft text-pretty">What you see below is Teamloom running live — try the full thing yourself.</p>
         </Reveal>
         <Reveal delay={0.1}>
           <motion.div whileHover={{ y: -4 }} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_30px_70px_-30px_rgba(55,48,163,.35)]">
@@ -17,10 +17,10 @@ export default function LivePreview() {
               <span className="h-2.5 w-2.5 rounded-full bg-[#c7c9f5]" />
               <span className="h-2.5 w-2.5 rounded-full bg-[#a8e6dc]" />
               <span className="h-2.5 w-2.5 rounded-full bg-[#a8e6c5]" />
-              <span className="ml-3 font-mono text-[.75rem] text-ink-soft">staffly.app/dashboard</span>
+              <span className="ml-3 font-mono text-[.75rem] text-ink-soft">teamloom.app/dashboard</span>
             </div>
             <div className="h-[420px] overflow-hidden md:h-[560px]">
-              <iframe src="app.html" title="Staffly live preview" loading="lazy" tabIndex={-1} aria-hidden="true" className="h-full w-full border-0" />
+              <iframe src="app.html" title="Teamloom live preview" loading="lazy" tabIndex={-1} aria-hidden="true" className="h-full w-full border-0" />
             </div>
           </motion.div>
           <div className="mt-8 text-center">
